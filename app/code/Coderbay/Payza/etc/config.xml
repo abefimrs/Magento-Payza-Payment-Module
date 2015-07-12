@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Coderbay_Payza>
+      <version>0.1.0</version>
+    </Coderbay_Payza>
+  </modules>
+  <global>
+    <models>
+      <payza>
+        <class>Coderbay_Payza_Model</class>
+      </payza>
+    </models>
+    <helpers>
+      <payza>
+        <class>Coderbay_Payza_Helper</class>
+      </payza>
+    </helpers>
+    <blocks>
+      <payza>
+        <class>Coderbay_Payza_Block</class>
+      </payza>
+    </blocks>
+  </global>
+  <default>
+    <payment>
+      <payza>
+        <model>payza/standard</model>
+        <active>1</active>
+        <order_status>pending</order_status>
+        <title>Payza Gateway</title>
+        <payment_action>sale</payment_action>
+		<merchant_email>Insert merchant id</merchant_email>
+		<live_check>0</live_check>
+        <allowspecific>0</allowspecific>
+		<order_status>2</order_status>
+        <sort_order>2</sort_order>
+      </payza>
+    </payment>
+  </default>
+  <frontend>
+    <routers>
+      <payza>
+        <use>standard</use>
+        <args>
+          <module>Coderbay_Payza</module>
+          <frontName>payza</frontName>
+        </args>
+      </payza>
+    </routers>
+  </frontend>
+</config>

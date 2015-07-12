@@ -1,0 +1,116 @@
+<?php
+
+	/**
+	*	Retrieve order
+	**/ 
+	$_order = new Mage_Sales_Model_Order();
+	$orderId = Mage::getSingleton('checkout/session')->getLastRealOrderId();
+	$_order->loadByIncrementId($orderId);
+	$items = $_order->getAllItems();
+	$itemcount=count($items);
+	/**
+	*	Prepared form for gateway
+	**/
+	$domain_url = Mage::getBaseUrl (Mage_Core_Model_Store::URL_TYPE_WEB);	
+	
+	
+	/**
+	**		Get Merchant email ID From Backend Configuration //seller_1_asif@fsb.com.bd
+			Get Live Or Demo Mode
+	
+	**/	
+	
+		$merchant_id =  Mage::getStoreConfig('payment/payza/merchant_email');
+		$isLive =  Mage::getStoreConfig('payment/payza/live_check');
+		
+		if($isLive)
+		{
+			$gatewayurl      = 'https://secure.payza.com/checkout';
+		}
+		else 
+		{
+			$gatewayurl      = 'https://sandbox.Payza.com/sandbox/payprocess.aspx';
+		}
+	
+	// Shipping charge in BDT
+	$shipping_charge = $_order->getShippingAmount();		
+	
+	// Calculating Tax
+	$tax = 0;
+	foreach($_order->getfulltaxinfo() as $key => $val) {
+		$tax += $val['base_real_amount'];
+	}
+	
+	
+	// Get Discount Amount
+	$discount = $_order->getdiscountamount(); 
+	
+	// Get USD RATE
+	$baseCode = Mage::app()->getBaseCurrencyCode(); 
+	$allowedCurrencies = Mage::getModel('directory/currency')->getConfigAllowCurrencies(); 
+	$rates = Mage::getModel('directory/currency')->getCurrencyRates($baseCode, array_values($allowedCurrencies));
+	
+	// Get Shipping Charge in USD
+	$shipping_charge_usd = Mage::app()->getStore()->roundPrice(($shipping_charge)*($rates['USD']));
+	
+	// Converting tax in USD and add as additional charge for payza
+	$additional_charge_usd = Mage::app()->getStore()->roundPrice(($tax)*($rates['USD']));
+	 
+	$returnurl	     = $domain_url.'index.php/payza/payment/success';
+	$cancelurl  	 = $domain_url.'index.php/payza/payment/cancel';	
+	$alerturl	     = $domain_url.'index.php/payza/ipn/ipnhandler';
+	
+	$i = 1;	
+	$payza = '<form name="mygatewayform" method="post" action="'.$gatewayurl.'">';
+	$payza .= '<input type="hidden" name="apc_1" value="'.$orderId.'">';
+	
+
+		
+	/**
+	*	 Generate ordered/checkout product and quantity
+	**/
+	foreach ($items as $itemId => $item) {
+		
+		if(($item->getPrice()!=0) && ($item->getQtyToInvoice()!=0)) {
+			
+			// Get Product Price in USD
+			$usdPrice = Mage::app()->getStore()->roundPrice(($item->getPrice())*($rates['USD']));	
+			
+			if($i > 0) $postfix = "_".$i; 
+			$i++;			
+			$payza .= '<input type="hidden" name="ap_itemname'.$postfix.'" value="'.$item->getName().'">';
+			$payza .= '<input type="hidden" name="ap_itemcode'.$postfix.'" value="'.$item->getSku().'">';		
+			//$payza .= '<input type="hidden" name="ap_amount'.$postfix.'" value="'.$item->getPrice().'">';
+			$payza .= '<input type="hidden" name="ap_amount'.$postfix.'" value="'.$usdPrice.'">';
+			$payza .= '<input type="hidden" name="ap_quantity'.$postfix.'" value="'.$item->getQtyToInvoice().'">';
+		}
+	}
+	
+	/**
+	*	Merchant information, currency, shipping charge are added to form
+	*
+	**/
+	$payza .= '<input type="hidden" name="ap_merchant" value="'.$merchant_id.'">';		 
+	$payza .= '<input type="hidden" name="ap_purchasetype" value="item">';
+	$payza .= '<input type="hidden" name="ap_currency" value="USD">';
+	$payza .= '<input type="hidden" name="ap_shippingcharges" value="'.$shipping_charge_usd.'">';
+	
+		
+	if($additional_charge_usd) {
+		$payza .= '<input type="hidden" name="ap_additionalcharges" value="'.$additional_charge_usd.'">';
+	}
+	if($discount) {
+		$payza .= '<input type="hidden" name="ap_discountamount" value="'.$discount.'">';
+	}
+	
+	$payza .= '<input type="hidden" name="ap_returnurl" value="'.$returnurl.'">';
+	$payza .= '<input type="hidden" name="ap_cancelurl" value="'.$cancelurl.'">';
+	// IPN ALERT URL
+	$payza .= '<input type="hidden" name="ap_alerturl" value="'.$alerturl.'">';
+	
+	$payza .= '</form>';
+	echo $payza;
+?>
+
+<center>Connecting To Payza Payment Gateway..</center>
+<script type="text/javascript">document.mygatewayform.submit();</script>

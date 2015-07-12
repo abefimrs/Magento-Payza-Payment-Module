@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Coderbay_Payza>
+            <active>true</active>
+            <codePool>local</codePool>
+        </Coderbay_Payza>
+    </modules>
+</config>

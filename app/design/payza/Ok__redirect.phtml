@@ -1,0 +1,62 @@
+<?php
+
+	/**
+	*	Retrieve order
+	**/ 
+	$_order = new Mage_Sales_Model_Order();
+	$orderId = Mage::getSingleton('checkout/session')->getLastRealOrderId();
+	$_order->loadByIncrementId($orderId);
+	$items = $_order->getAllItems();
+	$itemcount=count($items);
+	/**
+	*	Prepared form for gateway
+	**/
+	$shipping_charge = $_order->getShippingAmount();
+	$gatewayurl = 'https://sandbox.Payza.com/sandbox/payprocess.aspx'; 
+	$returnurl   = 'http://bagbornali.com/index.php/payza/payment/success';
+	$cancelurl  =  'http://bagbornali.com/index.php/payza/payment/cancel';	
+	$alerturl  =  'http://bagbornali.com/index.php/payza/ipn/ipnhandler';
+	
+	$i = 1;	
+	$payza = '<form name="mygatewayform" method="post" action="'.$gatewayurl.'">';
+	$payza .= '<input type="hidden" name="apc_1" value="'.$orderId.'">';
+	/**
+	*	 Generate ordered/checkout product and quantity
+	**/
+	foreach ($items as $itemId => $item)
+	{
+		if($i > 0) $postfix = "_".$i; 
+		$i++;
+		
+		$payza .= '<input type="hidden" name="ap_itemname'.$postfix.'" value="'.$item->getName().'">';
+		$payza .= '<input type="hidden" name="ap_itemcode'.$postfix.'" value="'.$item->getSku().'">';		
+		$payza .= '<input type="hidden" name="ap_amount'.$postfix.'" value="'.$item->getPrice().'">';
+		$payza .= '<input type="hidden" name="ap_quantity'.$postfix.'" value="'.$item->getQtyToInvoice().'">';
+	}
+	
+	/**
+	*	Merchant information, currency, shipping charge are added to form
+	*
+	**/
+	$payza .= '<input type="hidden" name="ap_merchant" value="seller_1_asif@fsb.com.bd">';		 
+	$payza .= '<input type="hidden" name="ap_purchasetype" value="item">';
+	$payza .= '<input type="hidden" name="ap_currency" value="USD">';
+	$payza .= '<input type="hidden" name="ap_shippingcharges" value="'.$shipping_charge.'">';
+	if($additional_charge) {
+		$payza .= '<input type="hidden" name="ap_additionalcharges" value="'.$additional_charge.'">';
+	}
+	if($discount) {
+		$payza .= '<input type="hidden" name="ap_discountamount" value="'.$discount.'">';
+	}
+	
+	$payza .= '<input type="hidden" name="ap_returnurl" value="'.$returnurl.'">';
+	$payza .= '<input type="hidden" name="ap_cancelurl" value="'.$cancelurl.'">';
+	// IPN ALERT URL
+	$payza .= '<input type="hidden" name="ap_alerturl" value="'.$alerturl.'">';
+	
+	$payza .= '</form>';
+	echo $payza;
+?>
+
+<center>Connecting To Payza Payment Gateway..</center>
+<script type="text/javascript">document.mygatewayform.submit();</script>
