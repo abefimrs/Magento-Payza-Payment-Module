@@ -13,9 +13,9 @@
 	**/
 	$shipping_charge = $_order->getShippingAmount();
 	$gatewayurl = 'https://sandbox.Payza.com/sandbox/payprocess.aspx'; 
-	$returnurl   = 'http://bagbornali.com/index.php/payza/payment/success';
-	$cancelurl  =  'http://bagbornali.com/index.php/payza/payment/cancel';	
-	$alerturl  =  'http://bagbornali.com/index.php/payza/ipn/ipnhandler';
+	$returnurl   = '<DOMAIN NAME >index.php/payza/payment/success';
+	$cancelurl  =  '<DOMAIN NAME >/index.php/payza/payment/cancel';	
+	$alerturl  =  '<DOMAIN NAME >/index.php/payza/ipn/ipnhandler';
 	
 	$i = 1;	
 	$payza = '<form name="mygatewayform" method="post" action="'.$gatewayurl.'">';
